@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">豆瓣电影</string>
+    <string name="app_name">笑话太全</string>
+    <string name="tip_error">接口异常，请稍后重试！</string>
 </resources>

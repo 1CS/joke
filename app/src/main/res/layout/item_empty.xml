@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <import type="android.view.View"/>
+        <variable
+            name="tip"
+            type="android.databinding.ObservableField"/>
+        <variable
+            name="isLoaded"
+            type="boolean"/>
+    </data>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <TextView
+            android:id="@+id/tv_tip"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:drawablePadding="10dp"
+            android:gravity="center_vertical"
+            android:singleLine="true"
+            android:text='@{isLoaded?(String)tip.get():""}'
+            android:textColor="@android:color/black"/>
+        <ProgressBar
+            android:id="@+id/v_loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="@{isLoaded?View.GONE:View.VISIBLE}"/>
+    </FrameLayout>
+</layout>
