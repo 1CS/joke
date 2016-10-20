@@ -1,106 +1,61 @@
 package com.lcs.joke.ui.activity;
 
-import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.widget.LinearLayout;
+import android.support.design.widget.TabLayout;
+import android.view.View;
 
 import com.lcs.joke.R;
 import com.lcs.joke.databinding.ActivityMainBinding;
-import com.lcs.joke.net.Api;
-import com.lcs.joke.net.NetCallback;
-import com.lcs.joke.net.bean.Joke;
-import com.lcs.joke.net.bean.response.BaseResponse;
-import com.lcs.joke.net.bean.response.JokeResponse;
-import com.lcs.joke.net.retrofit.AppServer;
-import com.lcs.joke.ui.adapter.BaseAdapter;
-import com.lcs.joke.ui.adapter.TextJokeAdapter;
+import com.lcs.joke.ui.adapter.TabPagerAdapter;
 import com.lcs.joke.utils.DebugLog;
+import com.lcs.joke.utils.rxbus.Callback;
+import com.lcs.joke.utils.rxbus.RxBus;
 
-public class MainActivity extends TaskActivity {
+public class MainActivity extends BaseActivity {
     private ActivityMainBinding binding;
-    private TextJokeAdapter adapter;
-    private int pageIndex = 0;
+    private float mx, my;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        TabPagerAdapter tabPagerAdapter = new TabPagerAdapter(getSupportFragmentManager());
+        binding.viewPager.setAdapter(tabPagerAdapter);
+        binding.tabLayout.setupWithViewPager(binding.viewPager);
+        binding.tabLayout.setTabMode(TabLayout.MODE_FIXED);
 
-        initView();
-        getLatestJoke(pageIndex);
-    }
-
-    private void initView() {
-        adapter = new TextJokeAdapter(MainActivity.this);
-        binding.recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayout.VERTICAL, false));
-        binding.recyclerView.setAdapter(adapter);
-        adapter.setEmptyTip(getString(R.string.tip_error));
-        DebugLog.e("xxxx " + System.currentTimeMillis());
-        adapter.setOnItemClickListener(new BaseAdapter.OnItemClickListener() {
+        RxBus.getDefault().subscribe(this, new Callback<Bitmap>() {
             @Override
-            public void onItemClick(int position) {
-                Joke joke = adapter.getItem(position);
-                share(joke.content);
-            }
-        });
-        binding.recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                if (!adapter.hasFooterView) {
-                    return;
-                }
-
-                LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
-                int visibleItemCount = lm.getChildCount();
-                int totalItemCount = lm.getItemCount();
-                int firstVisiblePosition = lm.findFirstVisibleItemPosition();
-
-                if ((firstVisiblePosition + visibleItemCount) >= totalItemCount) {
-                    getLatestJoke(++pageIndex);
-                }
+            public void onEvent(Bitmap bitmap) {
+                showBig(bitmap);
             }
         });
     }
 
-    private void share(String content) {
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_TEXT, content);
-        startActivity(intent);
+    public void showBig(Bitmap bitmap) {
+        DebugLog.e("bitmap : " + (bitmap == null));
+        binding.ivBig.setVisibility(View.VISIBLE);
+        binding.ivBig.setImageBitmap(bitmap);
     }
 
-    public void getLatestJoke(int pageIndex) {
-        NetCallback<BaseResponse<JokeResponse>> callback = new NetCallback<BaseResponse<JokeResponse>>() {
-            @Override
-            public void onSuccess(BaseResponse<JokeResponse> response) {
-                adapter.setLoaded(true);
-                if (response.result.data == null || response.result.data.isEmpty()) {
-                    adapter.removeFooterView();
-                    return;
-                }
+    public void onClickBig(View view) {
+        binding.ivBig.setVisibility(View.GONE);
+    }
 
-                if (response.result.data.size() < AppServer.PAGE_SIZE) {
-                    adapter.removeFooterView();
-                    adapter.addAll(response.result.data);
-                    return;
-                }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        RxBus.getDefault().unsubscribe(this);
+    }
 
-                if (adapter.hasFooterView) {
-                    adapter.insert(adapter.getItemCount() - 1, response.result.data);
-                } else {
-                    adapter.addAll(response.result.data);
-                    adapter.addFooterView(new Joke());
-                }
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                DebugLog.e("onError : " + e.getMessage());
-            }
-        };
-        addTask(Api.getLatestJoke(pageIndex, callback));
+    @Override
+    public void onBackPressed() {
+        if (binding.ivBig.isShown()) {
+            binding.ivBig.setVisibility(View.GONE);
+        } else {
+            super.onBackPressed();
+        }
     }
 }

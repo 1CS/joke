@@ -9,9 +9,36 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class Api {
-    public static NetTask getLatestJoke(int pageIndex, NetCallback<BaseResponse<JokeResponse>> callback) {
+    public static NetTask getLatestJoke(NetCallback<BaseResponse<JokeResponse>> callback) {
         Subscription task = RetrofitSender.getInstance()
-            .getLatestJoke(pageIndex)
+            .getLatestJoke()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(callback);
+        return new NetTask(task);
+    }
+
+    public static NetTask getLatestPic(NetCallback<BaseResponse<JokeResponse>> callback) {
+        Subscription task = RetrofitSender.getInstance()
+            .getLatestPic()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(callback);
+        return new NetTask(task);
+    }
+
+    public static NetTask getListJoke(int pageIndex, String time, NetCallback<BaseResponse<JokeResponse>> callback) {
+        Subscription task = RetrofitSender.getInstance()
+            .getListJoke(pageIndex, time)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(callback);
+        return new NetTask(task);
+    }
+
+    public static NetTask getListPic(int pageIndex, String time, NetCallback<BaseResponse<JokeResponse>> callback) {
+        Subscription task = RetrofitSender.getInstance()
+            .getListPic(pageIndex, time)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(callback);

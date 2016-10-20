@@ -1,24 +1,20 @@
 package com.lcs.joke.ui.adapter;
 
 import android.content.Context;
-import android.databinding.DataBindingUtil;
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.drawee.interfaces.DraweeController;
+import com.facebook.drawee.view.SimpleDraweeView;
 import com.lcs.joke.R;
-import com.lcs.joke.databinding.ItemTextJokeBinding;
 import com.lcs.joke.net.bean.Joke;
-import com.lcs.joke.utils.rxbus.RxBus;
 
-import java.util.ArrayList;
-
-public class TextJokeAdapter extends BaseAdapter<Joke> {
-    public TextJokeAdapter(Context context) {
-        super(context, R.layout.item_text_joke);
+public class PicJokeAdapter extends BaseAdapter<Joke> {
+    public PicJokeAdapter(Context context) {
+        super(context, R.layout.item_pic_joke);
     }
 
     @Override
@@ -34,26 +30,27 @@ public class TextJokeAdapter extends BaseAdapter<Joke> {
         }
 
         ViewHolder vh = (ViewHolder) holder;
-        final Joke joke = getItem(position);
-        joke.content = joke.content.replaceAll("　　", "");
-        joke.content = joke.content.replaceAll("  ", "");
+        Joke joke = getItem(position);
         vh.tvContent.setText(joke.content);
-        vh.tvTime.setText(joke.updatetime);
-        vh.tvTime.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                RxBus.getDefault().post(joke);
-            }
-        });
+        vh.tvTime.setText(String.format("更新时间：%s", joke.updatetime));
+
+        Uri uri = Uri.parse(joke.url);
+        DraweeController controller = Fresco.newDraweeControllerBuilder()
+            .setUri(uri)
+            .setAutoPlayAnimations(true)
+            .build();
+        vh.ivContent.setController(controller);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         private TextView tvContent, tvTime;
+        private SimpleDraweeView ivContent;
 
         public ViewHolder(View view) {
             super(view);
             tvContent = (TextView) view.findViewById(R.id.tv_content);
             tvTime = (TextView) view.findViewById(R.id.tv_time);
+            ivContent = (SimpleDraweeView) view.findViewById(R.id.iv_content);
         }
     }
 }
