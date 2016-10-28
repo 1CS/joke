@@ -14,9 +14,6 @@ public interface AppServer {
     @GET("joke/content/text.from?key=" + JOKE_KEY + "&page=1&pagesize=" + PAGE_SIZE)
     Observable<BaseResponse<JokeResponse>> getLatestJoke();
 
-    @GET("joke/img/text.from?key=" + JOKE_KEY + "&page=1&pagesize=" + PAGE_SIZE)
-    Observable<BaseResponse<JokeResponse>> getLatestPic();
-
     @GET("joke/content/list.from?sort=desc&key=" + JOKE_KEY + "&pagesize=" + PAGE_SIZE)
     Observable<BaseResponse<JokeResponse>> getListJoke(@Query("page") int page, @Query("time") String time);
 

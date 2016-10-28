@@ -9,18 +9,21 @@ import android.view.View;
 import com.lcs.joke.R;
 import com.lcs.joke.databinding.ActivityMainBinding;
 import com.lcs.joke.ui.adapter.TabPagerAdapter;
-import com.lcs.joke.utils.DebugLog;
 import com.lcs.joke.utils.rxbus.Callback;
 import com.lcs.joke.utils.rxbus.RxBus;
 
 public class MainActivity extends BaseActivity {
     private ActivityMainBinding binding;
-    private float mx, my;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+
+        initLayout();
+    }
+
+    private void initLayout() {
         TabPagerAdapter tabPagerAdapter = new TabPagerAdapter(getSupportFragmentManager());
         binding.viewPager.setAdapter(tabPagerAdapter);
         binding.tabLayout.setupWithViewPager(binding.viewPager);
@@ -35,7 +38,6 @@ public class MainActivity extends BaseActivity {
     }
 
     public void showBig(Bitmap bitmap) {
-        DebugLog.e("bitmap : " + (bitmap == null));
         binding.ivBig.setVisibility(View.VISIBLE);
         binding.ivBig.setImageBitmap(bitmap);
     }

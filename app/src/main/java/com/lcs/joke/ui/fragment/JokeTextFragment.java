@@ -3,6 +3,7 @@ package com.lcs.joke.ui.fragment;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -19,13 +20,13 @@ import com.lcs.joke.net.bean.Joke;
 import com.lcs.joke.net.bean.response.BaseResponse;
 import com.lcs.joke.net.bean.response.JokeResponse;
 import com.lcs.joke.net.retrofit.AppServer;
-import com.lcs.joke.ui.adapter.TextJokeAdapter;
+import com.lcs.joke.ui.adapter.JokeTextAdapter;
 import com.lcs.joke.utils.DebugLog;
 import com.lcs.joke.utils.rxbus.Callback;
 import com.lcs.joke.utils.rxbus.RxBus;
 
 public class JokeTextFragment extends TaskFragment {
-    private TextJokeAdapter adapter;
+    private JokeTextAdapter adapter;
     private int pageIndex = 1;
     private String time;
     private FragmentTabBinding binding;
@@ -35,30 +36,57 @@ public class JokeTextFragment extends TaskFragment {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_tab, container, false);
         initView();
         time = String.valueOf(System.currentTimeMillis() / 1000);
-        loadData(pageIndex);
+        loadData();
         return binding.getRoot();
     }
 
     private void initView() {
-        adapter = new TextJokeAdapter(getActivity());
+        binding.swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                loadData();
+            }
+        });
+        adapter = new JokeTextAdapter(getActivity());
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayout.VERTICAL, false));
         binding.recyclerView.setAdapter(adapter);
         adapter.setEmptyTip(getString(R.string.tip_error));
+        binding.fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                binding.recyclerView.scrollToPosition(0);
+            }
+        });
 
         binding.recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (dy > 0) {
+                    binding.fab.hide();
+                } else {
+                    LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    if (lm.findFirstVisibleItemPosition() == 0) {
+                        binding.fab.hide();
+                    } else {
+
+                        binding.fab.show();
+                    }
+                }
+            }
+
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
                 if (!adapter.hasFooterView) {
                     return;
                 }
 
-                LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
-                int visibleItemCount = lm.getChildCount();
-                int totalItemCount = lm.getItemCount();
-                int firstVisiblePosition = lm.findFirstVisibleItemPosition();
-
-                if ((firstVisiblePosition + visibleItemCount) >= totalItemCount) {
-                    loadData(++pageIndex);
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    if (lm.findLastVisibleItemPosition() + 1 == lm.getItemCount()) {
+                        loadMore();
+                    }
                 }
             }
         });
@@ -80,11 +108,11 @@ public class JokeTextFragment extends TaskFragment {
         startActivity(intent);
     }
 
-    public void loadData(int pageIndex) {
+    public void loadMore() {
+        pageIndex++;
         NetCallback<BaseResponse<JokeResponse>> callback = new NetCallback<BaseResponse<JokeResponse>>() {
             @Override
             public void onSuccess(BaseResponse<JokeResponse> response) {
-                adapter.setLoaded(true);
                 if (response.result.data == null || response.result.data.isEmpty()) {
                     adapter.removeFooterView();
                     return;
@@ -96,10 +124,31 @@ public class JokeTextFragment extends TaskFragment {
                     return;
                 }
 
-                if (adapter.hasFooterView) {
-                    adapter.insert(adapter.getItemCount() - 1, response.result.data);
-                } else {
-                    adapter.addAll(response.result.data);
+                adapter.insert(adapter.getItemCount() - 1, response.result.data);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                DebugLog.e("onError : " + e.getMessage());
+            }
+        };
+        addTask(Api.getListJoke(pageIndex, time, callback));
+    }
+
+    private void loadData() {
+        pageIndex = 1;
+        NetCallback<BaseResponse<JokeResponse>> callback = new NetCallback<BaseResponse<JokeResponse>>() {
+            @Override
+            public void onSuccess(BaseResponse<JokeResponse> response) {
+                adapter.setLoaded(true);
+                binding.swipeRefreshLayout.setRefreshing(false);
+                if (response.result.data == null || response.result.data.isEmpty()) {
+                    return;
+                }
+
+                adapter.clear();
+                adapter.addAll(response.result.data);
+                if (response.result.data.size() == AppServer.PAGE_SIZE) {
                     adapter.addFooterView(new Joke());
                 }
             }
@@ -107,6 +156,8 @@ public class JokeTextFragment extends TaskFragment {
             @Override
             public void onError(Throwable e) {
                 DebugLog.e("onError : " + e.getMessage());
+                adapter.setLoaded(true);
+                binding.swipeRefreshLayout.setRefreshing(false);
             }
         };
         addTask(Api.getListJoke(pageIndex, time, callback));

@@ -28,7 +28,6 @@
                 android:id="@+id/tv_time"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:drawableRight="@android:drawable/ic_menu_share"
                 android:gravity="center_vertical"
                 android:textColor="@android:color/darker_gray"/>
         </LinearLayout>

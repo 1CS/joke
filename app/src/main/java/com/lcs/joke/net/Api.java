@@ -18,15 +18,6 @@ public class Api {
         return new NetTask(task);
     }
 
-    public static NetTask getLatestPic(NetCallback<BaseResponse<JokeResponse>> callback) {
-        Subscription task = RetrofitSender.getInstance()
-            .getLatestPic()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(callback);
-        return new NetTask(task);
-    }
-
     public static NetTask getListJoke(int pageIndex, String time, NetCallback<BaseResponse<JokeResponse>> callback) {
         Subscription task = RetrofitSender.getInstance()
             .getListJoke(pageIndex, time)

@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import com.lcs.joke.R;
+import com.lcs.joke.databinding.FragmentRandomBinding;
 import com.lcs.joke.databinding.FragmentTabBinding;
 import com.lcs.joke.net.Api;
 import com.lcs.joke.net.NetCallback;
@@ -17,23 +18,23 @@ import com.lcs.joke.net.bean.Joke;
 import com.lcs.joke.net.bean.response.BaseResponse;
 import com.lcs.joke.net.bean.response.JokeResponse;
 import com.lcs.joke.ui.adapter.BaseAdapter;
-import com.lcs.joke.ui.adapter.TextJokeAdapter;
+import com.lcs.joke.ui.adapter.JokeTextAdapter;
 import com.lcs.joke.utils.DebugLog;
 
-public class AboutFragment extends TaskFragment {
-    private TextJokeAdapter adapter;
-    private FragmentTabBinding binding;
+public class RandomFragment extends TaskFragment {
+    private JokeTextAdapter adapter;
+    private FragmentRandomBinding binding;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_tab, container, false);
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_random, container, false);
         initView();
         getLatestJoke();
         return binding.getRoot();
     }
 
     private void initView() {
-        adapter = new TextJokeAdapter(getActivity());
+        adapter = new JokeTextAdapter(getActivity());
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayout.VERTICAL, false));
         binding.recyclerView.setAdapter(adapter);
         adapter.setEmptyTip(getString(R.string.tip_error));

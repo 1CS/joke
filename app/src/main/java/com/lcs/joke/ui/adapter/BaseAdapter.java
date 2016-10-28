@@ -16,14 +16,13 @@ import java.util.List;
 public abstract class BaseAdapter<T extends BaseItem> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final ObservableField<String> mTip = new ObservableField<>();
     public boolean hasFooterView = false;
-    public boolean hasHeaderView = false;
-    protected OnItemClickListener onItemClickListener;
-    protected Context mContext;
+    private OnItemClickListener onItemClickListener;
+    private Context mContext;
     private boolean isLoaded = false;
     private List<T> mList;
     private int mLayoutId;
 
-    public BaseAdapter(Context context, int layoutId) {
+    BaseAdapter(Context context, int layoutId) {
         mContext = context;
         mList = new ArrayList<>();
         mLayoutId = layoutId;
@@ -125,18 +124,15 @@ public abstract class BaseAdapter<T extends BaseItem> extends RecyclerView.Adapt
             return ItemType.EMPTY.ordinal();
         }
 
-        if (hasHeaderView) {
-            if (position == 0) {
-                return ItemType.HEADER.ordinal();
-            }
-            if (hasFooterView && position == getDataSize()) {
-                return ItemType.FOOTER.ordinal();
-            }
-        } else if (hasFooterView && position == getDataSize() - 1) {
+        if (hasFooterView && position == getDataSize() - 1) {
             return ItemType.FOOTER.ordinal();
         }
 
-        return getItem(position).itemType.ordinal();
+        return childItemViewType(position);
+    }
+
+    public int childItemViewType(int position) {
+        return ItemType.DEFAULT.ordinal();
     }
 
     @Override
@@ -145,9 +141,12 @@ public abstract class BaseAdapter<T extends BaseItem> extends RecyclerView.Adapt
             ((ViewHolderEmpty) holder).bind(mTip, isLoaded);
             return;
         }
-        /**
-         * 调用接口回调
-         */
+
+        if (holder instanceof ViewHolderFooter) {
+            return;
+        }
+
+        bindView(holder, position);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -157,6 +156,8 @@ public abstract class BaseAdapter<T extends BaseItem> extends RecyclerView.Adapt
             }
         });
     }
+
+    public abstract void bindView(RecyclerView.ViewHolder holder, int position);
 
     public void setEmptyTip(String tip) {
         mTip.set(tip);
@@ -218,7 +219,7 @@ public abstract class BaseAdapter<T extends BaseItem> extends RecyclerView.Adapt
         }
     }
 
-    public enum ItemType {DEFAULT, HEADER, FOOTER, EVEN, EMPTY}
+    public enum ItemType {DEFAULT, FOOTER, LEFT, EMPTY}
 
     /**
      * item click回调方法

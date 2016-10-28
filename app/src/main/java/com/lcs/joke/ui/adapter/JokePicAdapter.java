@@ -11,9 +11,10 @@ import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.lcs.joke.R;
 import com.lcs.joke.net.bean.Joke;
+import com.lcs.joke.utils.rxbus.RxBus;
 
-public class PicJokeAdapter extends BaseAdapter<Joke> {
-    public PicJokeAdapter(Context context) {
+public class JokePicAdapter extends BaseAdapter<Joke> {
+    public JokePicAdapter(Context context) {
         super(context, R.layout.item_pic_joke);
     }
 
@@ -23,16 +24,11 @@ public class PicJokeAdapter extends BaseAdapter<Joke> {
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        super.onBindViewHolder(holder, position);
-        if (holder instanceof ViewHolderFooter || holder instanceof ViewHolderEmpty) {
-            return;
-        }
-
+    public void bindView(RecyclerView.ViewHolder holder, int position) {
         ViewHolder vh = (ViewHolder) holder;
-        Joke joke = getItem(position);
+        final Joke joke = getItem(position);
         vh.tvContent.setText(joke.content);
-        vh.tvTime.setText(String.format("更新时间：%s", joke.updatetime));
+        vh.tvTime.setText(joke.updatetime);
 
         Uri uri = Uri.parse(joke.url);
         DraweeController controller = Fresco.newDraweeControllerBuilder()

@@ -5,7 +5,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
 import com.lcs.joke.ui.fragment.JokeTextFragment;
-import com.lcs.joke.ui.fragment.AboutFragment;
+import com.lcs.joke.ui.fragment.RandomFragment;
 import com.lcs.joke.ui.fragment.JokePicFragment;
 
 public class TabPagerAdapter extends FragmentPagerAdapter {
@@ -19,7 +19,7 @@ public class TabPagerAdapter extends FragmentPagerAdapter {
     public Fragment getItem(int position) {
         if (position == 0) return new JokeTextFragment();
         if (position == 1) return new JokePicFragment();
-        if (position == 2) return new AboutFragment();
+        if (position == 2) return new RandomFragment();
         return null;
     }
 
