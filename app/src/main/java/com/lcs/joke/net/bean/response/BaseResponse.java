@@ -1,7 +1,11 @@
 package com.lcs.joke.net.bean.response;
 
-public class BaseResponse<T> {
+import com.lcs.joke.net.bean.Joke;
+
+import java.util.ArrayList;
+
+public class BaseResponse {
     public String error_code;
     public String reason;
-    public T result;
+    public ArrayList<Joke> result;
 }

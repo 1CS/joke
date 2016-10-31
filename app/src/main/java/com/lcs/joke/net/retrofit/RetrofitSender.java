@@ -20,7 +20,7 @@ public class RetrofitSender {
         Retrofit retrofit = new Retrofit.Builder().client(okBuilder.build())
             .addConverterFactory(GsonConverterFactory.create())
             .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-            .baseUrl("http://japi.juhe.cn/")
+            .baseUrl("http://v.juhe.cn/")
             .build();
         server = retrofit.create(AppServer.class);
     }

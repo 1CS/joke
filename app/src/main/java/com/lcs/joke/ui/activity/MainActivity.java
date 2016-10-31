@@ -1,19 +1,28 @@
 package com.lcs.joke.ui.activity;
 
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
-import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.support.design.widget.TabLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.LinearLayout;
 
 import com.lcs.joke.R;
 import com.lcs.joke.databinding.ActivityMainBinding;
-import com.lcs.joke.ui.adapter.TabPagerAdapter;
+import com.lcs.joke.net.Api;
+import com.lcs.joke.net.NetCallback;
+import com.lcs.joke.net.bean.Joke;
+import com.lcs.joke.net.bean.response.BaseResponse;
+import com.lcs.joke.ui.adapter.JokeTextAdapter;
+import com.lcs.joke.utils.DebugLog;
 import com.lcs.joke.utils.rxbus.Callback;
 import com.lcs.joke.utils.rxbus.RxBus;
 
-public class MainActivity extends BaseActivity {
+public class MainActivity extends TaskActivity {
     private ActivityMainBinding binding;
+    private JokeTextAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,43 +30,134 @@ public class MainActivity extends BaseActivity {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         initLayout();
+        loadData();
     }
 
     private void initLayout() {
-        TabPagerAdapter tabPagerAdapter = new TabPagerAdapter(getSupportFragmentManager());
-        binding.viewPager.setAdapter(tabPagerAdapter);
-        binding.tabLayout.setupWithViewPager(binding.viewPager);
-        binding.tabLayout.setTabMode(TabLayout.MODE_FIXED);
-
-        RxBus.getDefault().subscribe(this, new Callback<Bitmap>() {
+        setSupportActionBar(binding.toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        binding.toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
-            public void onEvent(Bitmap bitmap) {
-                showBig(bitmap);
+            public void onClick(View view) {
+                onBackPressed();
+            }
+        });
+
+        binding.swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                loadData();
+            }
+        });
+
+        binding.fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                binding.recyclerView.scrollToPosition(0);
+            }
+        });
+
+        adapter = new JokeTextAdapter(getApplicationContext());
+        adapter.setEmptyTip(getString(R.string.tip_error));
+        binding.recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayout.VERTICAL,
+            false));
+        binding.recyclerView.setAdapter(adapter);
+        binding.recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (dy > 0) {
+                    binding.fab.hide();
+                } else {
+                    LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    if (lm.findFirstVisibleItemPosition() == 0) {
+                        binding.fab.hide();
+                    } else {
+
+                        binding.fab.show();
+                    }
+                }
+            }
+
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (!adapter.hasFooterView) {
+                    return;
+                }
+
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    if (lm.findLastVisibleItemPosition() + 1 == lm.getItemCount()) {
+                        loadMore();
+                    }
+                }
+            }
+        });
+
+        RxBus.getDefault().subscribe(this, new Callback<Joke>() {
+            @Override
+            public void onEvent(Joke joke) {
+                share(joke.content);
             }
         });
     }
 
-    public void showBig(Bitmap bitmap) {
-        binding.ivBig.setVisibility(View.VISIBLE);
-        binding.ivBig.setImageBitmap(bitmap);
+    private void share(String content) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_TEXT, content);
+        startActivity(intent);
     }
 
-    public void onClickBig(View view) {
-        binding.ivBig.setVisibility(View.GONE);
+    public void loadMore() {
+        NetCallback<BaseResponse> callback = new NetCallback<BaseResponse>() {
+            @Override
+            public void onSuccess(BaseResponse response) {
+                if (response.result == null || response.result.isEmpty()) {
+                    adapter.removeFooterView();
+                    return;
+                }
+
+                adapter.insert(adapter.getItemCount() - 1, response.result);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                DebugLog.e("onError : " + e.getMessage());
+            }
+        };
+        addTask(Api.getJoke(callback));
+    }
+
+    private void loadData() {
+        NetCallback<BaseResponse> callback = new NetCallback<BaseResponse>() {
+            @Override
+            public void onSuccess(BaseResponse response) {
+                adapter.setLoaded(true);
+                binding.swipeRefreshLayout.setRefreshing(false);
+                if (response.result == null || response.result.isEmpty()) {
+                    return;
+                }
+
+                adapter.clear();
+                adapter.addAll(response.result);
+                adapter.addFooterView(new Joke());
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                DebugLog.e("onError : " + e.getMessage());
+                adapter.setLoaded(true);
+                binding.swipeRefreshLayout.setRefreshing(false);
+            }
+        };
+        addTask(Api.getJoke(callback));
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
         RxBus.getDefault().unsubscribe(this);
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (binding.ivBig.isShown()) {
-            binding.ivBig.setVisibility(View.GONE);
-        } else {
-            super.onBackPressed();
-        }
     }
 }

@@ -9,9 +9,16 @@ import com.lcs.joke.databinding.ItemTextJokeBinding;
 import com.lcs.joke.net.bean.Joke;
 import com.lcs.joke.utils.rxbus.RxBus;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+
 public class JokeTextAdapter extends BaseAdapter<Joke> {
+    private SimpleDateFormat formatter;
+
     public JokeTextAdapter(Context context) {
         super(context, R.layout.item_text_joke);
+        formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
     }
 
     @Override
@@ -26,7 +33,10 @@ public class JokeTextAdapter extends BaseAdapter<Joke> {
         joke.content = joke.content.replaceAll("　　", "");
         joke.content = joke.content.replaceAll("  ", "");
         vh.binding.tvContent.setText(joke.content);
-        vh.binding.tvTime.setText(joke.updatetime);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(Long.parseLong(joke.unixtime + "000"));
+        vh.binding.tvTime.setText(formatter.format(calendar.getTime()));
         vh.binding.tvTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
