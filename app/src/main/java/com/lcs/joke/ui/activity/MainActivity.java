@@ -4,8 +4,11 @@ import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 
@@ -159,5 +162,25 @@ public class MainActivity extends TaskActivity {
     public void onDestroy() {
         super.onDestroy();
         RxBus.getDefault().unsubscribe(this);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        showAboutDialog();
+        return true;
+    }
+
+    private void showAboutDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("联系我们");
+        builder.setMessage("如有改善建议或问题，随时欢迎联系！\nQQ：10907315\n微信号：liu_congshan");
+        builder.setPositiveButton("确定", null);
+        builder.show();
     }
 }
